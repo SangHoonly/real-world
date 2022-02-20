@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="LeeJerry.realWorld.model.mapper.ArticleMapper">
+  <resultMap id="author" type="LeeJerry.realWorld.model.dto.ProfileRes">
+<!--    <id property="id" column="author_id" />-->
+    <result property="username" column="author_name" />
+    <result property="bio" column="author_bio" />
+    <result property="image" column="author_image" />
+    <result property="following" column="author_following" />
+  </resultMap>
+
+  <resultMap id="article" type="LeeJerry.realWorld.model.dto.ArticleRes">
+    <result property="slug" column="article_slug" />
+    <result property="title" column="article_title" />
+    <result property="description" column="article_description" />
+    <result property="body" column="article_body" />
+
+    <result property="createdAt" column="article_created_at" />
+    <result property="updatedAt" column="article_updated_at" />
+
+    <result property="favorited" column="article_favorited" />
+    <result property="favoritesCount" column="article_favoritesCount" />
+
+    <association property="author" resultMap="author" />
+
+    <collection property="tagList" ofType="java.lang.String">
+      <result column="tag_name" />
+    </collection>
+
+  </resultMap>
+
+  
+  <select id="findArticles" resultMap="article">
+    select * , T.name as tag_name from
+    (select
+    Art.id   as article_id,
+    Art.slug as article_slug,
+    Art.title as article_title,
+    Art.description as article_description,
+    Art.body as article_body,
+    Art.created_at as article_created_at,
+    Art.updated_at as article_updated_at,
+
+    IFNULL(F.status, 0) as article_favorited,
+    IFNULL(FCNT.favoritesCount, 0) as article_favoritesCount,
+
+    U.id as author_id,
+    U.name as author_name,
+    U.bio as author_bio,
+    U.picture as author_image,
+    IF(U.following = 0, false, true) as author_following
+
+
+    from articles Art
+    left outer join favorites F on F.article_id = Art.id and (F.user_id IS NULL or (#{userId} is not null and F.user_id = #{userId}))
+    left outer join (select article_id, count(id) as favoritesCount from favorites group by article_id) as FCNT on FCNT.article_id = Art.id
+    left outer join (select author.id, author.name, author.bio, author.picture, IFNULL(f2.id, 0) as
+    following from users as author left outer join follows f2 on author.id = f2.followee_id and (f2.follower_id IS NULL or f2.follower_id = #{userId})) as U on U.id = Art.author_id
+
+    <where>
+        <if test="author != null"> U.name = #{author} </if>
+        <if test="tag != null">  and #{tag} in (select name from tags where tags.article_id = Art.id) </if>
+        <if test="favorited != null"> and #{favorited} in
+        (select name from users inner join favorites f on users.id = f.user_id and f.article_id = Art.id) </if>
+    </where>
+
+    order by Art.created_at desc
+    limit #{limit} offset #{offset}
+    ) as R left outer join tags T on R.article_id = T.article_id
+        <if test="tag != null"> and #{tag} in (select name from tags where tags.article_id = R.article_id) </if>
+</select>
+</mapper>
