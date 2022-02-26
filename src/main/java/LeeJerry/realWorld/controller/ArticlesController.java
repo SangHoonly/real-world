@@ -21,12 +21,12 @@ public class ArticlesController {
 
 
     @GetMapping
-    ArticlesRes findArticles(@RequestParam(required = false) Map<String, Object> params) {
-        if (!params.containsKey("limit"))
-            params.put("limit", 20);
+    ArticlesRes findArticles(@RequestParam(required = false, defaultValue = "20") int limit,
+                            @RequestParam(required = false, defaultValue = "0") int offset,
+                            @RequestParam(required = false) Map<String, Object> params) {
 
-        if (!params.containsKey("offset"))
-            params.put("offset", 0);
+        params.put("limit", limit);
+        params.put("offset", offset * limit);
 
         return new ArticlesRes(articleService.findArticles(params));
     }

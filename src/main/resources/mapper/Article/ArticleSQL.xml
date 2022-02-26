@@ -66,8 +66,7 @@
         (select name from users inner join favorites f on users.id = f.user_id and f.article_id = Art.id) </if>
     </where>
 
-    order by Art.created_at desc
-    limit #{limit} offset #{offset}
+    order by Art.created_at desc LIMIT ${limit} offset ${offset}
     ) as R left outer join tags T on R.article_id = T.article_id
         <if test="tag != null"> and #{tag} in (select name from tags where tags.article_id = R.article_id) </if>
 </select>

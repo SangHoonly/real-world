@@ -11,6 +11,7 @@ import LeeJerry.realWorld.model.dto.ArticleRes;
 import LeeJerry.realWorld.model.dto.ProfileRes;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,18 +32,29 @@ class ArticlesControllerTest {
     @MockBean
     ArticleService articleService;
 
-    private final Map<String, Object> defaultParams = new HashMap<>();
+    private final Map<String, Object> params = new HashMap<>();
+    private final List<ArticleRes> articleResList = new ArrayList<>();
 
     @BeforeEach
     void init() {
-        List<ArticleRes> articleResList = new ArrayList<>();
+        params.clear();
+        articleResList.clear();
+
+        params.put("limit", 20);
+        params.put("offset", 0);
+
+        ArticleRes garen = getArticle(getTagList("spring"), getAuthor("garen"), true);
+        ArticleRes darius = getArticle(getTagList("mysql"), getAuthor("darius"), false);
+        ArticleRes teemo = getArticle(getTagList("spring"), getAuthor("teemo"), false);
+        ArticleRes nasus = getArticle(getTagList("nodejs"), getAuthor("nasus"), false);
+
+        articleResList.add(garen);
+        articleResList.add(darius);
+        articleResList.add(teemo);
+        articleResList.add(nasus);
 
 
-        articleResList.add(getArticle(getTagList("spring"), getAuthor("jake"), false));
-        articleResList.add(getArticle(getTagList("mysql"), getAuthor("darius"), false));
-
-
-        when(articleService.findArticles(defaultParams)).thenReturn(articleResList);
+        when(articleService.findArticles(params)).thenReturn(articleResList);
         when(articleService.findArticles(null)).thenReturn(articleResList);
 
     }
@@ -55,27 +67,22 @@ class ArticlesControllerTest {
         mockMvc.perform(
             get("/api/articles"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.articlesCount", is(2)));
+            .andExpect(jsonPath("$.articlesCount", is(4)));
     }
-//
+
     @Test
     @DisplayName("/api/articles 에 쿼리 파리미터로 태그를 넣을 시, 해당 태그가 포함된 아티클을 가져온다.")
     void findArticles_filtered_by_tag_name() throws Exception {
         // given
-        ArticleRes article1 = getArticle(getTagList("spring"), getAuthor("jake"), false);
-
-        List<ArticleRes> article1Res = new ArrayList<>();
-        Map<String, Object> params = new HashMap<>();
-
-        article1Res.add(article1);
         params.put("tag", "spring");
 
-        when(articleService.findArticles(params)).thenReturn(article1Res);
+        when(articleService.findArticles(params))
+            .thenReturn(Arrays.asList(articleResList.get(0), articleResList.get(2)));
 
         // when & then
         mockMvc.perform(
             get("/api/articles?tag=spring"))
-            .andExpect(jsonPath("$.articlesCount", is(1)))
+            .andExpect(jsonPath("$.articlesCount", is(2)))
             .andExpect(jsonPath("$.articles[0].tagList[0]").value("spring"));
     }
 
@@ -83,15 +90,9 @@ class ArticlesControllerTest {
     @DisplayName("/api/articles 에 쿼리 파리미터로 author 를 넣을 시, 해당 태그가 포함된 아티클을 가져온다.")
     void findArticles_filtered_by_author() throws Exception {
         // given
-        ArticleRes article1 = getArticle(getTagList("spring"), getAuthor("garen"), false);
-
-        List<ArticleRes> article1Res = new ArrayList<>();
-        Map<String, Object> params = new HashMap<>();
-
-        article1Res.add(article1);
         params.put("author", "garen");
 
-        when(articleService.findArticles(params)).thenReturn(article1Res);
+        when(articleService.findArticles(params)).thenReturn(List.of(articleResList.get(0)));
 
         // when & then
         mockMvc.perform(
@@ -104,21 +105,45 @@ class ArticlesControllerTest {
     @DisplayName("/api/articles 에 쿼리 파리미터로 favorited 를 넣을 시, 해당 태그가 포함된 아티클을 가져온다.")
     void findArticles_filtered_by_favorited() throws Exception {
         // given
-        ArticleRes article1 = getArticle(getTagList("spring"), getAuthor("garen"), true);
-
-        List<ArticleRes> article1Res = new ArrayList<>();
-        Map<String, Object> params = new HashMap<>();
-
-        article1Res.add(article1);
         params.put("favorited", "garen");
 
-        when(articleService.findArticles(params)).thenReturn(article1Res);
+        when(articleService.findArticles(params)).thenReturn(List.of(articleResList.get(0)));
 
         // when & then
         mockMvc.perform(
                 get("/api/articles?favorited=garen"))
             .andExpect(jsonPath("$.articlesCount", is(1)))
             .andExpect(jsonPath("$.articles[0].favorited").value(true));
+    }
+
+    @Test
+    @DisplayName("/api/articles 에 쿼리 파리미터로 limit 를 넣을 시, limit 만큼 아티클을 가져온다.")
+    void findArticles_filtered_by_limit() throws Exception {
+        // given
+        params.put("limit", 2);
+
+        when(articleService.findArticles(params)).thenReturn(Arrays.asList(articleResList.get(0), articleResList.get(1)));
+
+        // when & then
+        mockMvc.perform(
+                get("/api/articles?limit=2"))
+            .andExpect(jsonPath("$.articlesCount", is(2)));
+    }
+
+    @Test
+    @DisplayName("/api/articles 에 쿼리 파리미터로 offset 를 넣을 시, offset 에서 limit 만큼 아티클을 가져온다.")
+    void findArticles_filtered_by_offset() throws Exception {
+        // given
+        params.put("limit", 2);
+        params.put("offset", 2);
+
+        when(articleService.findArticles(params)).thenReturn(Arrays.asList(articleResList.get(2), articleResList.get(3)));
+
+        // when & then
+        mockMvc.perform(
+                get("/api/articles?limit=2&offset=1"))
+            .andExpect(jsonPath("$.articlesCount", is(2)))
+            .andExpect(jsonPath("$.articles[0].author.username").value("teemo"));
     }
 
 
