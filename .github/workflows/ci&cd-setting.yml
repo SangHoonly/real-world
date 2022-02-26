@@ -1,7 +1,7 @@
 name: Java CI / CD with Gradle
 
 env:
-  S3_BUCKET_NAME: realworld-deploy
+  S3_BUCKET_NAME: realworld-s3-bucket
 
 on:
   push:
@@ -36,7 +36,7 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ secrets.AWS_REGION }}
     - name: Upload to S3
-      run: aws s3 cp --region ap-northeast-2 ./realWorld.zip s3://$S3_BUCKET_NAME/realWorld.zip
+      run: aws s3 cp --region us-east-1 ./realWorld.zip s3://$S3_BUCKET_NAME/realWorld.zip
 
     - name: Code Deploy
-      run: aws deploy create-deployment --application-name realWorld --deployment-config-name CodeDeployDefault.AllAtOnce --deployment-group-name realworld-single-deploy --s3-location bucket=$S3_BUCKET_NAME,bundleType=zip,key=$S3_BUCKET_NAME/realWorld.zip
+      run: aws deploy create-deployment --application-name realWorld --deployment-config-name CodeDeployDefault.AllAtOnce --deployment-group-name realworld-single-deploy --s3-location bucket=$S3_BUCKET_NAME,bundleType=zip,key=realWorld.zip
