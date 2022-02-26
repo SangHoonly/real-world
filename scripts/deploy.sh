@@ -1,17 +1,14 @@
 #!/bin/bash
 
-BUILD_JAR=$(ls /home/ec2-user/realWorld/build/libs/*.jar)
-REPOSITORY=/home/ec2-user/realWorld/
-JAR_NAME=$(basename $BUILD_JAR)
+REPOSITORY=/home/ec2-user/realWorld
 
 echo "> build 파일 복사"
-cp $BUILD_JAR $REPOSITORY
+cp $REPOSITORY/*.jar $REPOSITORY/
 
 echo "> 현재 실행중인 애플리케이션 pid 확인"
-CURRENT_PID=$(pgrep -f "$JAR_NAME")
+CURRENT_PID=$(pgrep -fl realWorld | grep jar | awk '{print $1}')
 
-if [ -z $CURRENT_PID ]
-then
+if [ -z "$CURRENT_PID" ]; then
   echo "> 현재 구동 중인 애플리케이션이 없으므로 종료하지 않습니다."
 else
   echo "> kill -15 $CURRENT_PID"
@@ -19,9 +16,9 @@ else
   sleep 5
 fi
 
-DEPLOY_JAR=$DEPLOY_PATH$JAR_NAME
+JAR_NAME=$(ls -tr $REPOSITORY/*.jar | tail -n 1)
 
-chmod +x $DEPLOY_JAR
+chmod +x $JAR_NAME
 
 echo "> 새 애플리케이션 실행"
-nohup java -jar $DEPLOY_JAR > /home/ec2-user/realWorld/nohup.out 2>&1 &
+nohup java -jar $JAR_NAME > /home/ec2-user/realWorld/nohup.out 2>&1 &
