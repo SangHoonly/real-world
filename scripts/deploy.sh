@@ -1,6 +1,8 @@
 #!/bin/bash
 
 REPOSITORY=/home/ec2-user/realWorld
+echo "> 환경 변수 로드"
+source /home/ec2-user/config.env
 
 echo "> build 파일 복사"
 cp $REPOSITORY/build/libs/*SNAPSHOT.jar $REPOSITORY/

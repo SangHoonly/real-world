@@ -24,10 +24,6 @@ jobs:
       uses: gradle/gradle-build-action@937999e9cc2425eddc7fd62d1053baf041147db7
       with:
         arguments: build
-      env:
-        REALWORLD_MYSQL_JDBC_URL: ${{secrets.REALWORLD_MYSQL_JDBC_URL}}
-        REALWORLD_MYSQL_USERNAME: ${{secrets.REALWORLD_MYSQL_USERNAME}}
-        REALWORLD_MYSQL_PASSWORD: ${{secrets.REALWORLD_MYSQL_PASSWORD}}
 
     - name: Make zip file
       run: zip -r ./realWorld.zip *
